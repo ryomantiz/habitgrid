@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react'
 import { parseDate, formatLocal, todayStr } from '../../utils/dates'
 
-export default function Calendar({ habits }) {
+export default function Calendar({ habits, selDate, onSelectDate }) {
   const today = habits.today || todayStr()
   const t = parseDate(today)
   const [viewYear, setViewYear] = useState(t.getFullYear())
   const [viewMonth, setViewMonth] = useState(t.getMonth())
-  const [selDate, setSelDate] = useState(today)
 
   const monthName = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'][viewMonth]
@@ -59,12 +58,12 @@ export default function Calendar({ habits }) {
     const p = parseDate(today)
     setViewYear(p.getFullYear())
     setViewMonth(p.getMonth())
-    setSelDate(today)
+    onSelectDate(today)
   }
 
   function handleDayClick(day) {
     if (day.future || day.blank) return
-    setSelDate(day.date)
+    onSelectDate(day.date)
   }
 
   return (

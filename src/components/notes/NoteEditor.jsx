@@ -100,7 +100,7 @@ export default function NoteEditor({ note, tags, onUpdateNote, onAddTag, onRemov
 
       <div className="note-editor-footer">
         <span>{content.split(/\s+/).filter(Boolean).length} words · {content.length} chars</span>
-        <span>{new Date(note.updated_at || note.created_at).toLocaleString()}</span>
+        <span>{new Date((note.updated_at || note.created_at || '').replace(' ', 'T') + 'Z').toLocaleString()}</span>
       </div>
     </div>
   )

@@ -1,9 +1,8 @@
-import { useState, useMemo, useCallback, useRef, useEffect } from 'react'
+import { useMemo, useRef } from 'react'
 import { parseDate } from '../../utils/dates'
 
-export default function CheckinPanel({ habits, toast }) {
+export default function CheckinPanel({ habits, selDate, toast }) {
   const today = habits.today
-  const [selDate, setSelDate] = useState(today)
   const noteTimers = useRef({})
 
   const d = parseDate(selDate)

@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { todayStr } from '../../utils/dates'
 import Calendar from './Calendar'
 import CheckinPanel from './CheckinPanel'
 import HabitBoard from './HabitBoard'
@@ -9,6 +10,7 @@ export default function HabitsView({ habits, toast }) {
   const [addOpen, setAddOpen] = useState(false)
   const [extendOpen, setExtendOpen] = useState(false)
   const [extendId, setExtendId] = useState(null)
+  const [selDate, setSelDate] = useState(habits.today || todayStr())
 
   const handleAdd = () => setAddOpen(true)
   const handleExtend = (id) => { setExtendId(id); setExtendOpen(true) }
@@ -16,11 +18,11 @@ export default function HabitsView({ habits, toast }) {
   return (
     <main className="layout">
       <div className="col">
-        <Calendar habits={habits} />
+        <Calendar habits={habits} selDate={selDate} onSelectDate={setSelDate} />
       </div>
 
       <div className="col">
-        <CheckinPanel habits={habits} toast={toast} />
+        <CheckinPanel habits={habits} selDate={selDate} toast={toast} />
         <HabitBoard habits={habits} toast={toast} onAdd={handleAdd} onExtend={handleExtend} />
       </div>
 
