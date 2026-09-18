@@ -268,9 +268,10 @@ async function createNote(env, u, b) {
   const id = genId('n');
   const title = String(b.title || 'Untitled').trim().slice(0, 200);
   const folderId = b.folderId || null;
-  await env.DB.prepare('INSERT INTO notes (id, user_id, title, content, folder_id) VALUES (?, ?, ?, ?, ?)')
-    .bind(id, u.id, title, '', folderId).run();
-  return { id, title, content: '', folderId, tagIds: [] };
+  const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+  await env.DB.prepare('INSERT INTO notes (id, user_id, title, content, folder_id, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)')
+    .bind(id, u.id, title, '', folderId, now, now).run();
+  return { id, title, content: '', folder_id: folderId, created_at: now, updated_at: now, tagIds: [] };
 }
 
 async function updateNote(env, u, b) {

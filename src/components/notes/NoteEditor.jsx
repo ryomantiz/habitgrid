@@ -100,7 +100,14 @@ export default function NoteEditor({ note, tags, onUpdateNote, onAddTag, onRemov
 
       <div className="note-editor-footer">
         <span>{content.split(/\s+/).filter(Boolean).length} words · {content.length} chars</span>
-        <span>{new Date((note.updated_at || note.created_at || '').replace(' ', 'T') + 'Z').toLocaleString()}</span>
+        <span>{(() => {
+          const raw = note.updated_at || note.created_at
+          if (!raw) return ''
+          try {
+            const d = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T') + 'Z')
+            return isNaN(d.getTime()) ? '' : d.toLocaleString()
+          } catch { return '' }
+        })()}</span>
       </div>
     </div>
   )

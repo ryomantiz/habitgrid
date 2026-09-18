@@ -69,7 +69,14 @@ export default function NoteList({ notes, folders, selectedFolder, selectedNote,
                 {(note.content || '').replace(/[#*_`~\[\]]/g, '').slice(0, 60) || 'Empty note'}
               </div>
               <div className="note-list-item-meta">
-                <span>{new Date((note.updated_at || note.created_at || '').replace(' ', 'T') + 'Z').toLocaleDateString()}</span>
+                <span>{(() => {
+                  const raw = note.updated_at || note.created_at
+                  if (!raw) return ''
+                  try {
+                    const d = new Date(raw.includes('T') ? raw : raw.replace(' ', 'T') + 'Z')
+                    return isNaN(d.getTime()) ? '' : d.toLocaleDateString()
+                  } catch { return '' }
+                })()}</span>
                 {note.tagIds?.length > 0 && <span className="note-tag-count">{note.tagIds.length} tag{note.tagIds.length === 1 ? '' : 's'}</span>}
                 <button
                   className={`note-del-btn ${confirmDel === note.id ? 'confirm' : ''}`}
