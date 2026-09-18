@@ -44,6 +44,17 @@ async function route(path, req, env, b) {
     case '/api/habit/delete': {    const u = await auth(env, req); return deleteHabit(env, req, u, b); }
     case '/api/profile/update': {  const u = await auth(env, req); return updateProfile(env, u, b); }
     case '/api/profile/password': {const u = await auth(env, req); return changePassword(env, u, b); }
+    // Notes
+    case '/api/notes/bootstrap': {const u = await auth(env, req); return bootstrapNotes(env, u); }
+    case '/api/note/create':     {const u = await auth(env, req); return createNote(env, u, b); }
+    case '/api/note/update':     {const u = await auth(env, req); return updateNote(env, u, b); }
+    case '/api/note/delete':     {const u = await auth(env, req); return deleteNote(env, u, b); }
+    case '/api/note/tag':        {const u = await auth(env, req); return tagNote(env, u, b); }
+    case '/api/tag/create':      {const u = await auth(env, req); return createTag(env, u, b); }
+    // Folders
+    case '/api/folder/create':   {const u = await auth(env, req); return createFolder(env, u, b); }
+    case '/api/folder/rename':   {const u = await auth(env, req); return renameFolder(env, u, b); }
+    case '/api/folder/delete':   {const u = await auth(env, req); return deleteFolder(env, u, b); }
     default: throw new HttpError('Endpoint not found', 404);
   }
 }
@@ -224,6 +235,114 @@ async function ownHabit(env, userId, habitId) {
   const h = await env.DB.prepare('SELECT * FROM habits WHERE id = ? AND user_id = ?').bind(habitId, userId).first();
   if (!h) throw new HttpError('Habit not found in your account');
   return h;
+}
+
+/* ──────────────────────── notes ──────────────────────── */
+
+function genId(prefix) {
+  return prefix + '_' + crypto.randomUUID().replace(/-/g, '').slice(0, 14);
+}
+
+async function bootstrapNotes(env, u) {
+  const folders = await env.DB.prepare('SELECT * FROM folders WHERE user_id = ? ORDER BY name ASC').bind(u.id).all();
+  const notes = await env.DB.prepare('SELECT * FROM notes WHERE user_id = ? ORDER BY updated_at DESC').bind(u.id).all();
+  const tags = await env.DB.prepare('SELECT * FROM tags WHERE user_id = ? ORDER BY name ASC').bind(u.id).all();
+  const noteTags = await env.DB.prepare(
+    'SELECT nt.note_id, nt.tag_id FROM note_tags nt JOIN tags t ON nt.tag_id = t.id WHERE t.user_id = ?'
+  ).bind(u.id).all();
+
+  const noteTagsMap = {};
+  (noteTags.results || []).forEach(nt => {
+    if (!noteTagsMap[nt.note_id]) noteTagsMap[nt.note_id] = [];
+    noteTagsMap[nt.note_id].push(nt.tag_id);
+  });
+
+  return {
+    folders: folders.results || [],
+    notes: (notes.results || []).map(n => ({ ...n, tagIds: noteTagsMap[n.id] || [] })),
+    tags: tags.results || [],
+  };
+}
+
+async function createNote(env, u, b) {
+  const id = genId('n');
+  const title = String(b.title || 'Untitled').trim().slice(0, 200);
+  const folderId = b.folderId || null;
+  await env.DB.prepare('INSERT INTO notes (id, user_id, title, content, folder_id) VALUES (?, ?, ?, ?, ?)')
+    .bind(id, u.id, title, '', folderId).run();
+  return { id, title, content: '', folderId, tagIds: [] };
+}
+
+async function updateNote(env, u, b) {
+  if (!b.noteId) throw new HttpError('noteId required');
+  const n = await env.DB.prepare('SELECT id FROM notes WHERE id = ? AND user_id = ?').bind(b.noteId, u.id).first();
+  if (!n) throw new HttpError('Note not found');
+  const title = b.title !== undefined ? String(b.title).trim().slice(0, 200) : undefined;
+  const content = b.content !== undefined ? String(b.content).slice(0, 50000) : undefined;
+  if (title !== undefined && content !== undefined) {
+    await env.DB.prepare("UPDATE notes SET title = ?, content = ?, updated_at = datetime('now') WHERE id = ?").bind(title, content, b.noteId).run();
+  } else if (title !== undefined) {
+    await env.DB.prepare("UPDATE notes SET title = ?, updated_at = datetime('now') WHERE id = ?").bind(title, b.noteId).run();
+  } else if (content !== undefined) {
+    await env.DB.prepare("UPDATE notes SET content = ?, updated_at = datetime('now') WHERE id = ?").bind(content, b.noteId).run();
+  }
+  return { ok: true };
+}
+
+async function deleteNote(env, u, b) {
+  if (!b.noteId) throw new HttpError('noteId required');
+  const n = await env.DB.prepare('SELECT id FROM notes WHERE id = ? AND user_id = ?').bind(b.noteId, u.id).first();
+  if (!n) throw new HttpError('Note not found');
+  await env.DB.prepare('DELETE FROM note_tags WHERE note_id = ?').bind(b.noteId).run();
+  await env.DB.prepare('DELETE FROM notes WHERE id = ?').bind(b.noteId).run();
+  return { ok: true };
+}
+
+async function createFolder(env, u, b) {
+  const id = genId('f');
+  const name = String(b.name || 'New Folder').trim().slice(0, 100);
+  const parentId = b.parentId || null;
+  await env.DB.prepare('INSERT INTO folders (id, user_id, name, parent_id) VALUES (?, ?, ?, ?)').bind(id, u.id, name, parentId).run();
+  return { id, name, parentId };
+}
+
+async function renameFolder(env, u, b) {
+  if (!b.folderId) throw new HttpError('folderId required');
+  const name = String(b.name || '').trim().slice(0, 100);
+  if (!name) throw new HttpError('Folder name required');
+  const f = await env.DB.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').bind(b.folderId, u.id).first();
+  if (!f) throw new HttpError('Folder not found');
+  await env.DB.prepare('UPDATE folders SET name = ? WHERE id = ?').bind(name, b.folderId).run();
+  return { ok: true };
+}
+
+async function deleteFolder(env, u, b) {
+  if (!b.folderId) throw new HttpError('folderId required');
+  const f = await env.DB.prepare('SELECT id FROM folders WHERE id = ? AND user_id = ?').bind(b.folderId, u.id).first();
+  if (!f) throw new HttpError('Folder not found');
+  await env.DB.prepare('UPDATE notes SET folder_id = NULL WHERE folder_id = ?').bind(b.folderId).run();
+  await env.DB.prepare('DELETE FROM folders WHERE id = ?').bind(b.folderId).run();
+  return { ok: true };
+}
+
+async function tagNote(env, u, b) {
+  if (!b.noteId || !b.tagId) throw new HttpError('noteId and tagId required');
+  const n = await env.DB.prepare('SELECT id FROM notes WHERE id = ? AND user_id = ?').bind(b.noteId, u.id).first();
+  if (!n) throw new HttpError('Note not found');
+  if (b.action === 'add') {
+    await env.DB.prepare('INSERT OR IGNORE INTO note_tags (note_id, tag_id) VALUES (?, ?)').bind(b.noteId, b.tagId).run();
+  } else if (b.action === 'remove') {
+    await env.DB.prepare('DELETE FROM note_tags WHERE note_id = ? AND tag_id = ?').bind(b.noteId, b.tagId).run();
+  }
+  return { ok: true };
+}
+
+async function createTag(env, u, b) {
+  const id = genId('t');
+  const name = String(b.name || '').trim().slice(0, 50);
+  if (!name) throw new HttpError('Tag name required');
+  await env.DB.prepare('INSERT INTO tags (id, user_id, name) VALUES (?, ?, ?)').bind(id, u.id, name).run();
+  return { id, name };
 }
 
 /* ──────────────────────── utilities ──────────────────────── */

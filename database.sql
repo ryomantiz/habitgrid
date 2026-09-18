@@ -38,6 +38,48 @@ CREATE TABLE IF NOT EXISTS logs (
   PRIMARY KEY (date, habit_id, user_id)
 );
 
-CREATE INDEX IF NOT EXISTS idx_habits_user    ON habits(user_id);
-CREATE INDEX IF NOT EXISTS idx_logs_user      ON logs(user_id);
-CREATE INDEX IF NOT EXISTS idx_sessions_exp   ON sessions(expires);
+-- Notes feature tables
+CREATE TABLE IF NOT EXISTS folders (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  name       TEXT NOT NULL,
+  parent_id  TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (parent_id) REFERENCES folders(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS notes (
+  id         TEXT PRIMARY KEY,
+  user_id    TEXT NOT NULL,
+  title      TEXT NOT NULL DEFAULT 'Untitled',
+  content    TEXT DEFAULT '',
+  folder_id  TEXT,
+  created_at TEXT DEFAULT (datetime('now')),
+  updated_at TEXT DEFAULT (datetime('now')),
+  FOREIGN KEY (folder_id) REFERENCES folders(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS tags (
+  id      TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  name    TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS note_tags (
+  note_id TEXT NOT NULL,
+  tag_id  TEXT NOT NULL,
+  PRIMARY KEY (note_id, tag_id),
+  FOREIGN KEY (note_id) REFERENCES notes(id) ON DELETE CASCADE,
+  FOREIGN KEY (tag_id) REFERENCES tags(id) ON DELETE CASCADE
+);
+
+-- Indexes
+CREATE INDEX IF NOT EXISTS idx_habits_user      ON habits(user_id);
+CREATE INDEX IF NOT EXISTS idx_logs_user        ON logs(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_exp     ON sessions(expires);
+CREATE INDEX IF NOT EXISTS idx_folders_user     ON folders(user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_user       ON notes(user_id);
+CREATE INDEX IF NOT EXISTS idx_notes_folder     ON notes(folder_id);
+CREATE INDEX IF NOT EXISTS idx_tags_user        ON tags(user_id);
+CREATE INDEX IF NOT EXISTS idx_note_tags_note   ON note_tags(note_id);
+CREATE INDEX IF NOT EXISTS idx_note_tags_tag    ON note_tags(tag_id);

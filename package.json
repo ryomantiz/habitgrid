@@ -1,0 +1,28 @@
+{
+  "name": "habitgrid",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Habit tracking app with Markdown notes - React + Vite",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "@toast-ui/editor": "^3.2.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.1",
+    "vite": "^5.0.8"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ryomantiz/habitgrid.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ryomantiz/habitgrid/issues"
+  },
+  "homepage": "https://github.com/ryomantiz/habitgrid#readme"
+}
