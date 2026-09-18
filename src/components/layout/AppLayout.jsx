@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useContext } from 'react'
+import { AuthContext } from '../../context/AuthContext'
 import Topbar from './Topbar'
 import TabBar from './TabBar'
 import HabitsView from '../habits/HabitsView'
@@ -13,12 +14,15 @@ import useToast from '../../hooks/useToast'
 export default function AppLayout() {
   const [activeTab, setActiveTab] = useState('habits')
   const [profileOpen, setProfileOpen] = useState(false)
+  const { setUser } = useContext(AuthContext)
   const habits = useHabits()
   const notes = useNotes()
   const { message: toastMsg, visible: toastVisible, toast } = useToast()
 
   useEffect(() => {
-    habits.bootstrap()
+    habits.bootstrap().then(res => {
+      if (res?.user) setUser(res.user)
+    })
     notes.bootstrap()
   }, [])
 
