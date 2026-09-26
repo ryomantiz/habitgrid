@@ -954,6 +954,39 @@ input[type='date']:focus {
   transition: 0.18s;
 }
 
+.h-edit {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+  border: none;
+  background: transparent;
+  opacity: 0.4;
+}
+
+.h-edit:hover {
+  opacity: 1;
+  transform: scale(1.1);
+}
+
+.h-rename {
+  display: flex;
+  gap: 6px;
+  margin-top: 8px;
+  align-items: center;
+}
+
+.h-rename input {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 9px;
+  border: 1.5px solid var(--green);
+  border-radius: 8px;
+  font-size: 13px;
+  background: var(--paper);
+  color: var(--ink);
+  outline: none;
+}
+
 .iconbtn:hover {
   transform: translateY(-1px);
   border-color: var(--ink);

@@ -44,3 +44,12 @@ export async function deleteHabit(token, habitId) {
   )
   return data
 }
+
+export async function renameHabit(token, habitId, name) {
+  const data = await apiCall(
+    '/api/habit/rename',
+    { habitId, name },
+    token
+  )
+  return data
+}

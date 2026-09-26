@@ -3,9 +3,32 @@ import { diffDays } from '../../utils/dates'
 
 export default function HabitBoard({ habits, toast, onAdd, onExtend }) {
   const [armedDel, setArmedDel] = useState(null)
+  const [renamingId, setRenamingId] = useState(null)
+  const [renameValue, setRenameValue] = useState('')
   const armTimer = useRef(null)
   const today = habits.today
   const activeList = habits.activeHabits()
+
+  function startRename(id, name) {
+    setRenamingId(id)
+    setRenameValue(name)
+  }
+
+  async function commitRename(id) {
+    const name = renameValue.trim()
+    if (!name) {
+      setRenamingId(null)
+      return
+    }
+    try {
+      await habits.renameHabit(id, name)
+      toast('Habit renamed ✏️')
+    } catch (e) {
+      toast('⚠️ ' + (e.message || 'Failed to rename'))
+    } finally {
+      setRenamingId(null)
+    }
+  }
 
   function handleDelete(id) {
     if (armedDel !== id) {
@@ -59,9 +82,36 @@ export default function HabitBoard({ habits, toast, onAdd, onExtend }) {
                 <div className="h-body">
                   <div className="h-line1">
                     <h3>{h.name}</h3>
-                    <span className="pct" style={{ color: h.color }}>{h.pct}<small>%</small></span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: 10 }}>
+                      <button
+                        className="iconbtn h-edit"
+                        onClick={() => startRename(h.id, h.name)}
+                        title="Rename habit"
+                      >
+                        ✏️
+                      </button>
+                      <span className="pct" style={{ color: h.color }}>{h.pct}<small>%</small></span>
+                    </div>
                   </div>
-                  <div className="h-meta">{meta}</div>
+                  {renamingId === h.id ? (
+                    <div className="h-rename">
+                      <input
+                        type="text"
+                        value={renameValue}
+                        maxLength="60"
+                        autoFocus
+                        onChange={(e) => setRenameValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') commitRename(h.id)
+                          if (e.key === 'Escape') setRenamingId(null)
+                        }}
+                      />
+                      <button className="mini" onClick={() => commitRename(h.id)}>Save</button>
+                      <button className="mini" onClick={() => setRenamingId(null)}>Cancel</button>
+                    </div>
+                  ) : (
+                    <div className="h-meta">{meta}</div>
+                  )}
                   <div className="bar">
                     <i data-w={h.pct} style={{ width: `${h.pct}%`, background: h.color }} />
                     <u style={{ left: '25%' }} />

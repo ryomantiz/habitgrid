@@ -78,6 +78,7 @@ export default function CheckinPanel({ habits, selDate, toast }) {
                     {log.done && <span className="tag-done">done</span>}
                   </div>
                   <input
+                    key={selDate + '-' + h.id}
                     className="note"
                     maxLength="300"
                     placeholder="Add a note for this day…"

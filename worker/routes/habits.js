@@ -52,6 +52,14 @@ export async function deleteHabit(env, req, u, b) {
   return bootstrap(env, req, u);
 }
 
+export async function renameHabit(env, req, u, b) {
+  await ownHabit(env, u.id, b.habitId);
+  const name = String(b.name || '').trim().slice(0, 60);
+  if (!name) throw new HttpError('Name cannot be empty');
+  await env.DB.prepare('UPDATE habits SET name = ? WHERE id = ? AND user_id = ?').bind(name, b.habitId, u.id).run();
+  return bootstrap(env, req, u);
+}
+
 async function ownHabit(env, userId, habitId) {
   const h = await env.DB.prepare('SELECT * FROM habits WHERE id = ? AND user_id = ?').bind(habitId, userId).first();
   if (!h) throw new HttpError('Habit not found in your account');

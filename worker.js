@@ -42,6 +42,7 @@ async function route(path, req, env, b) {
     case '/api/habit/note': {      const u = await auth(env, req); return saveNote(env, req, u, b); }
     case '/api/habit/extend': {    const u = await auth(env, req); return extendHabit(env, req, u, b); }
     case '/api/habit/delete': {    const u = await auth(env, req); return deleteHabit(env, req, u, b); }
+    case '/api/habit/rename': {    const u = await auth(env, req); return renameHabit(env, req, u, b); }
     case '/api/profile/update': {  const u = await auth(env, req); return updateProfile(env, u, b); }
     case '/api/profile/password': {const u = await auth(env, req); return changePassword(env, u, b); }
     // Notes
@@ -211,6 +212,14 @@ async function extendHabit(env, req, u, b) {
 async function deleteHabit(env, req, u, b) {
   await env.DB.prepare('DELETE FROM logs WHERE user_id = ? AND habit_id = ?').bind(u.id, b.habitId).run();
   await env.DB.prepare('DELETE FROM habits WHERE user_id = ? AND id = ?').bind(u.id, b.habitId).run();
+  return bootstrap(env, req, u);
+}
+
+async function renameHabit(env, req, u, b) {
+  await ownHabit(env, u.id, b.habitId);
+  const name = String(b.name || '').trim().slice(0, 60);
+  if (!name) throw new HttpError('Name cannot be empty');
+  await env.DB.prepare('UPDATE habits SET name = ? WHERE id = ? AND user_id = ?').bind(name, b.habitId, u.id).run();
   return bootstrap(env, req, u);
 }
 

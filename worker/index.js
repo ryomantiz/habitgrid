@@ -1,7 +1,7 @@
 import { cors, bearer } from './middleware/cors.js';
 import { HttpError } from './utils/validators.js';
 import { bootstrap as authBootstrap, signup, login, logout, createSession, deleteSession, purgeSessions } from './routes/auth.js';
-import { addHabit, toggleDone, saveNote, extendHabit, deleteHabit } from './routes/habits.js';
+import { addHabit, toggleDone, saveNote, extendHabit, deleteHabit, renameHabit } from './routes/habits.js';
 import { bootstrapNotes, createNote, updateNote, deleteNote, createFolder, renameFolder, deleteFolder, tagNote, createTag } from './routes/notes.js';
 import { updateProfile, changePassword } from './routes/profile.js';
 
@@ -61,6 +61,10 @@ async function route(path, req, env, b) {
     case '/api/habit/delete': {
       const u = await auth(env, req);
       return deleteHabit(env, req, u, b);
+    }
+    case '/api/habit/rename': {
+      const u = await auth(env, req);
+      return renameHabit(env, req, u, b);
     }
     case '/api/profile/update': {
       const u = await auth(env, req);

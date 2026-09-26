@@ -1,6 +1,6 @@
 import { useState, useCallback, useContext } from 'react'
 import { AuthContext } from '../context/AuthContext'
-import { addHabit as apiAdd, toggleDone as apiToggle, saveNote as apiSaveNote, extendHabit as apiExtend, deleteHabit as apiDelete } from '../api/habits'
+import { addHabit as apiAdd, toggleDone as apiToggle, saveNote as apiSaveNote, extendHabit as apiExtend, deleteHabit as apiDelete, renameHabit as apiRename } from '../api/habits'
 import { bootstrap as apiBootstrap } from '../api/auth'
 import { todayStr, formatLocal, parseDate, diffDays } from '../utils/dates'
 
@@ -53,6 +53,12 @@ export default function useHabits() {
     return res
   }, [token])
 
+  const renameHabit = useCallback(async (habitId, name) => {
+    const res = await apiRename(token, habitId, name)
+    setData(res)
+    return res
+  }, [token])
+
   const activeHabits = useCallback(() => {
     if (!data) return []
     return data.habits.filter(h => h.status !== 'archived')
@@ -72,6 +78,7 @@ export default function useHabits() {
     saveNote,
     extendHabit,
     deleteHabit,
+    renameHabit,
     activeHabits,
     logFor,
     today: data?.today || todayStr(),
